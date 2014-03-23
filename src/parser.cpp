@@ -189,10 +189,7 @@ void Parser::RecordWord(char* word, int word_len)
         word[word_len] = '\0';
 
         if(!sw_trie.Search(word))
-        {
             freq[string(word)]++;
-            doc_freq[string(word)]++;
-        }
     }
 }
 
@@ -221,16 +218,15 @@ void Parser::ParseFile(char* fname)
         RecordWord(word, word_len);
     }
 
-    FILE_NUM++;
-    cout << FILE_NUM << endl;
-
     if(!freq.empty())
     {
         ++FILE_NUM;
         char outfpath[MAX_PATH_LEN];
         sprintf(outfpath, "%s/%d", out_dir, FILE_NUM);
         WriteFreq(outfpath, freq);
-    }   
+        for(map<string, int>::iterator it=freq.begin(); it!=freq.end(); it++)
+            doc_freq[it->first]++;
+    }
 
     fclose(fp);
 }
