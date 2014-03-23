@@ -3,13 +3,7 @@
 
 using namespace std;
 
-//cluster to store the details
-class Cluster
-{
-	public:	
-		vector<int> doc_ids;		
-};
-
+#define MAX_PATH_LEN 1024
 
 class Similarity
 {
@@ -18,17 +12,18 @@ class Similarity
 		vector<vector<double> > sim;
 
 		Similarity(char* unigram_dp);
+        void FindSim();
 };
 
-Similarity::Similarity(char* unigram_dp)
+Similarity::Similarity(char* unigram_dp) : unigram_dpath(unigram_dp)
 {
-	unigram_dpath=unigram_dp;
 }
 
 void Similarity::FindSim()
 {
-	DIR* dir=opendir(unigram_dpath);
-	if(dir==NULL)
+	DIR* dir = opendir(unigram_dpath);
+
+	if(dir == NULL)
 	{
 		puts("Error:can't open directory");
 		exit(-1);
@@ -47,7 +42,9 @@ void Similarity::FindSim()
 			continue;
 
 		strcpy(fpath + unigram_dpath_len + 1, file->d_name);
-		DIR* dir2=opendir(unigram_dpath);
+        FILE* fp = fopen(fpath, "r");
+
+		DIR* dir2 = opendir(unigram_dpath);
 		struct dirent* file2;
 		char fpath2[MAX_PATH_LEN];
 		int unigram_dpath_len2 = strlen(unigram_dpath);
@@ -61,13 +58,15 @@ void Similarity::FindSim()
 				continue;
 
 			strcpy(fpath2 + unigram_dpath_len2 + 1, file2->d_name);
-			
-
+            FILE* fp2 = fopen(fpath2, "r");
+            fclose(fp);
 		}
 		closedir(dir);
+        fclose(dp);
 	}
 }
+
 int main()
-
-
-
+{
+    return 0;
+}
