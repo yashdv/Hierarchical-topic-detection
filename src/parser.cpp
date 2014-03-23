@@ -110,21 +110,37 @@ class Parser
         char* buf;
         char* corpus_dir;
         char* out_dir;
+        char* df_fpath;
         struct stemmer* z;
         map<string, int> freq;
+        map<string, int> doc_freq;
 
-        Parser(char* stop_words_fpath, char* corpus_dpath, char* outd);
+        Parser(char* stop_words_fpath,
+               char* corpus_dpath,
+               char* outd,
+               char* dffpath);
+
         bool Read(FILE* fp);
         bool BufpInc(FILE* fp);
-        void WriteFreq(char* outfpath);
+        void WriteFreq(char* outfpath, map<string, int>& mp);
+
         void RecordWord(char* word, int word_len);
         void ParseFile(char* fname);
         void IterateDir();
+
         ~Parser();
 };
 
-Parser::Parser(char* stop_words_fpath, char* corpus_dpath, char* outd) :
-    corpus_dir(corpus_dpath), FILE_NUM(0), out_dir(outd), bufp(0), buflen(0)
+Parser::Parser(char* stop_words_fpath,
+               char* corpus_dpath,
+               char* outd,
+               char* dffpath) :
+    corpus_dir(corpus_dpath),
+    out_dir(outd),
+    df_fpath(dffpath),
+    bufp(0),
+    buflen(0),
+    FILE_NUM(0)
 {
     char stop_word[MAX_SW_SZ];
     FILE* fp = fopen(stop_words_fpath, "r");
@@ -152,12 +168,12 @@ inline bool Parser::BufpInc(FILE* fp)
     return Read(fp);
 }
 
-void Parser::WriteFreq(char* outfpath)
+void Parser::WriteFreq(char* outfpath, map<string, int>& mp)
 {
     FILE* fp = fopen(outfpath, "w");
-    map<string, int>::iterator it = freq.begin();
+    map<string, int>::iterator it = mp.begin();
 
-    for(; it != freq.end(); it++)
+    for(; it != mp.end(); it++)
         fprintf(fp, "%s %d\n", it->first.c_str(), it->second);
     fclose(fp);
 }
@@ -173,7 +189,10 @@ void Parser::RecordWord(char* word, int word_len)
         word[word_len] = '\0';
 
         if(!sw_trie.Search(word))
+        {
             freq[string(word)]++;
+            doc_freq[string(word)]++;
+        }
     }
 }
 
@@ -202,13 +221,16 @@ void Parser::ParseFile(char* fname)
         RecordWord(word, word_len);
     }
 
+    FILE_NUM++;
+    cout << FILE_NUM << endl;
+
     if(!freq.empty())
     {
         ++FILE_NUM;
         char outfpath[MAX_PATH_LEN];
         sprintf(outfpath, "%s/%d", out_dir, FILE_NUM);
-        WriteFreq(outfpath);
-    }
+        WriteFreq(outfpath, freq);
+    }   
 
     fclose(fp);
 }
@@ -238,8 +260,14 @@ void Parser::IterateDir()
         strcpy(fpath + corpus_dir_len + 1, file->d_name);
         ParseFile(fpath);
     }
-
     closedir(dir);
+
+    if(!doc_freq.empty())
+    {
+        char outfpath[MAX_PATH_LEN];
+        sprintf(outfpath, "%s/docfreq", df_fpath);
+        WriteFreq(outfpath, doc_freq);
+    }
 }
 
 Parser::~Parser()
@@ -250,13 +278,13 @@ Parser::~Parser()
 
 int main(int argc, char* argv[])
 {
-    if(argc != 4)
+    if(argc != 5)
     {
-        puts("Usage: ./a.out <StopWordsFile> <CorpusDir> <OutputDir>");
+        puts("Usage: ./a.out <StopWordsFile> <CorpusDir> <OutputDir> <df-fpath>");
         return -1;
     }
 
-    Parser par(argv[1], argv[2], argv[3]);
+    Parser par(argv[1], argv[2], argv[3], argv[4]);
     par.IterateDir();
 
     return 0;
