@@ -104,7 +104,6 @@ class Parser
 {
     public:
         StopWordsTrie sw_trie;
-        int FILE_NUM;
         int bufp;
         int buflen;
         char* buf;
@@ -125,7 +124,7 @@ class Parser
         void WriteFreq(char* outfpath, map<string, int>& mp);
 
         void RecordWord(char* word, int word_len);
-        void ParseFile(char* fname);
+        void ParseFile(char* fpath, char* fname);
         void IterateDir();
 
         ~Parser();
@@ -139,8 +138,7 @@ Parser::Parser(char* stop_words_fpath,
     out_dir(outd),
     df_fpath(dffpath),
     bufp(0),
-    buflen(0),
-    FILE_NUM(0)
+    buflen(0)
 {
     char stop_word[MAX_SW_SZ];
     FILE* fp = fopen(stop_words_fpath, "r");
@@ -193,9 +191,9 @@ void Parser::RecordWord(char* word, int word_len)
     }
 }
 
-void Parser::ParseFile(char* fname)
+void Parser::ParseFile(char* fpath, char* fname)
 {
-    FILE* fp = fopen(fname, "r");
+    FILE* fp = fopen(fpath, "r");
     int word_len;
     char word[MAX_WORD_SZ];
 
@@ -218,11 +216,11 @@ void Parser::ParseFile(char* fname)
         RecordWord(word, word_len);
     }
 
+
     if(!freq.empty())
     {
-        ++FILE_NUM;
         char outfpath[MAX_PATH_LEN];
-        sprintf(outfpath, "%s/%d", out_dir, FILE_NUM);
+        sprintf(outfpath, "%s/%s", out_dir, fname);
         WriteFreq(outfpath, freq);
 
         for(map<string, int>::iterator it=freq.begin(); it!=freq.end(); it++)
@@ -255,7 +253,7 @@ void Parser::IterateDir()
             continue;
 
         strcpy(fpath + corpus_dir_len + 1, file->d_name);
-        ParseFile(fpath);
+        ParseFile(fpath, file->d_name);
     }
     closedir(dir);
 
@@ -277,7 +275,7 @@ int main(int argc, char* argv[])
 {
     if(argc != 5)
     {
-        puts("Usage: ./a.out <StopWordsFile> <CorpusDir> <OutputDir> <df-fpath>");
+        puts("Usage: ./a.out <StopWordsFile> <CorpusDir> <OutputDir> <df-dirpath>");
         return -1;
     }
 

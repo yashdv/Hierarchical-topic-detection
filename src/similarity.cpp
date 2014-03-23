@@ -225,10 +225,11 @@ void Similarity::FindSim()
 
 void Similarity::Print()
 {
-    for(int i=1; i<=sim.size(); i++)
+    printf("%d\n", num_files);
+    for(int i=1; i<sim.size(); i++)
     {
-        for(int j=1; j<=sim[i].size(); j++)
-            printf("%lf\n"m sim[i][j]);
+        for(int j=1; j<sim[i].size(); j++)
+            printf("%lf ", sim[i][j]);
         puts("");
     }
 }
