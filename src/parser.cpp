@@ -224,6 +224,7 @@ void Parser::ParseFile(char* fname)
         char outfpath[MAX_PATH_LEN];
         sprintf(outfpath, "%s/%d", out_dir, FILE_NUM);
         WriteFreq(outfpath, freq);
+
         for(map<string, int>::iterator it=freq.begin(); it!=freq.end(); it++)
             doc_freq[it->first]++;
     }
