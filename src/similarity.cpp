@@ -153,9 +153,15 @@ double Similarity::FindDocSim(vector<pair<string, double> >& wt1,
     while(i < wt1.size() && j < wt2.size())
     {
         if(wt1[i].first < wt2[j].first)
+        {
+            norm1 += wt1[i].second * wt1[i].second;
             i++;
+        }
         else if(wt1[i].first > wt2[j].first)
+        {
+            norm2 += wt2[j].second * wt2[j].second;
             j++;
+        }
         else
         {
             nume  += wt1[i].second * wt2[j].second;
