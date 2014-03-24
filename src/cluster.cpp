@@ -92,7 +92,7 @@ double HC::ClusterSim(Cluster& c1, Cluster& c2)
 
 void HC::Run()
 {
-    while(clusters.size() > 750)
+    while(clusters.size() > 1)
     {
         double max_clus_sim = -1;
         int idx1;
