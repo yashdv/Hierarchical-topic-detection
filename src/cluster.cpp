@@ -17,6 +17,7 @@ class Node
 {
     public:
         int id;
+        bool is_root;
         Node* left;
         Node* right;
 };
@@ -28,11 +29,15 @@ class HC
         vector<Cluster> clusters;
         vector<Node> tree;
         int ID_CNT;
+        int n;
 
         HC(char* simf);
         void LoadSim(char* simf);
+        double ClusterSim(Cluster& c1, Cluster& c2);
         void Run();
-}
+        void PrintTree();
+        void Print(Node* p, int level);
+};
 
 HC::HC(char* simf)
 {
@@ -50,11 +55,12 @@ HC::HC(char* simf)
     tree = vector<Node>(n+1);
     for(int i=1; i<=n; ++i)
     {
-        Node n;
-        n.id = i;
-        n.left = NULL;
-        n.right = NULL;
-        tree[i] = n;
+        Node node;
+        node.id = i;
+        node.left = NULL;
+        node.right = NULL;
+        node.is_root = true;
+        tree[i] = node;
     }
 
     ID_CNT = n;
@@ -63,7 +69,6 @@ HC::HC(char* simf)
 void HC::LoadSim(char* simf)
 {
     FILE* fp = fopen(simf, "r");
-    int n;
 
     fscanf(fp, "%d", &n);
     sim = vector<vector<double> >(n+1, vector<double>(n+1));
@@ -77,8 +82,8 @@ void HC::LoadSim(char* simf)
 double HC::ClusterSim(Cluster& c1, Cluster& c2)
 {
     double avg_sim = 0;
-    for(int i=0; i<c1.did.size(); i++)
-        for(int j=0; j<c2.did.size(); j++)
+    for(int i=0; i<c1.did.size(); ++i)
+        for(int j=0; j<c2.did.size(); ++j)
             avg_sim += sim[c1.did[i]][c2.did[j]];
     
     avg_sim /= (c1.did.size() * c2.did.size());
@@ -87,11 +92,9 @@ double HC::ClusterSim(Cluster& c1, Cluster& c2)
 
 void HC::Run()
 {
-    while(true)
+    while(clusters.size() > 750)
     {
         double max_clus_sim = -1;
-        int c1;
-        int c2;
         int idx1;
         int idx2;
         for(int i=0; i<clusters.size(); ++i)
@@ -102,8 +105,6 @@ void HC::Run()
                 if(clus_sim > max_clus_sim)
                 {
                     max_clus_sim = clus_sim;
-                    c1 = clusters[i].id;
-                    c2 = clusters[j].id;
                     idx1 = i;
                     idx2 = j;
                 }
@@ -111,11 +112,17 @@ void HC::Run()
         }
 
         ++ID_CNT;
-        Node n;
-        n.id = ID_CNT;
-        n.left = tree[c1];
-        n.right = tree[c2];
-        tree.push_back(n);
+
+        Node node;
+        node.id = ID_CNT;
+        node.left  = &tree[clusters[idx1].id];
+        node.right = &tree[clusters[idx2].id];
+        node.is_root = true;
+
+        node.left->is_root = false;
+        node.right->is_root = false;
+
+        tree.push_back(node);
 
         clusters[idx1].id = ID_CNT;
         clusters[idx1].did.insert(clusters[idx1].did.end(),
@@ -126,7 +133,46 @@ void HC::Run()
     }
 }
 
+void HC::PrintTree()
+{
+    for(int i=0; i<tree.size(); ++i)
+    {
+        if(!tree[i].is_root)
+            continue;
+
+        Node* root = &tree[i];
+        Print(root, 0);
+        printf("\n\n");
+        printf("************");
+        printf("\n\n");
+    }
+}
+
+void HC::Print(Node* p, int level)
+{
+    if(p == NULL)
+        return;
+    for(int i=1; i<level; ++i)
+    {
+        printf("|    ");
+    }
+    if(level)
+        printf("|----");
+    printf("%d\n", p->id);
+    Print(p->left,  level + 1);
+    Print(p->right, level + 1);
+}
+
 int main(int argc, char* argv[])
 {
+    if(argc != 2)
+    {
+        puts("Usage: ./a.out sim_mat_fpath");
+        return -1;
+    }
+
+    HC handler(argv[1]);
+    handler.Run();
+    handler.PrintTree();
     return 0;
 }
