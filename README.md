@@ -9,5 +9,5 @@ Go to the bin directory and execute,
 make  
 
 To run the generated binary, look at the error message that are printed on wrong
-usage. Alternatively, the begenning lines of main() in each code describes the
+usage. Alternatively, the beginning lines of main() in each code describes the
 usage.
