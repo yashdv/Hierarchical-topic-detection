@@ -92,7 +92,7 @@ double HC::ClusterSim(Cluster& c1, Cluster& c2)
 
 void HC::Run()
 {
-    while(clusters.size() > 1)
+    while(clusters.size() > 650)
     {
         double max_clus_sim = -1;
         int idx1;
@@ -110,6 +110,9 @@ void HC::Run()
                 }
             }
         }
+
+        //printf("max_clus_sim = %lf, %d %d\n", max_clus_sim, clusters[idx1].id,
+        //        clusters[idx2].id);
 
         ++ID_CNT;
 
@@ -173,6 +176,6 @@ int main(int argc, char* argv[])
 
     HC handler(argv[1]);
     handler.Run();
-    handler.PrintTree();
+    //handler.PrintTree();
     return 0;
 }

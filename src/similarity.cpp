@@ -12,6 +12,10 @@
 
 using namespace std;
 
+typedef pair<string, string> pss;
+
+#define F first
+#define S second
 #define MAX_PATH_LEN 1024
 #define CHUNK_SZ 100000000
 #define MAX_WORD_SZ 100
@@ -26,16 +30,16 @@ class Similarity
         int buflen;
         int num_files;
         vector<vector<double> > sim;
-        map<string,int> df;		
+        map<pss, int> df;		
 
         Similarity(char* unigram_dp, char* df_path);
         bool Read(FILE* fp);
         bool BufpInc(FILE* fp);
         void LoadDf(char* fpath);
-        void LoadFile(char* fpath, vector<pair<string, double> >& wt);
+        void LoadFile(char* fpath, vector<pair<pss, double> >& wt);
         void FindSim();
-        double FindDocSim(vector<pair<string, double> >& wt1,
-                          vector<pair<string, double> >& wt2);
+        double FindDocSim(vector<pair<pss, double> >& wt1,
+                          vector<pair<pss, double> >& wt2);
         void Print();
         ~Similarity();
 };
@@ -79,69 +83,97 @@ void Similarity::LoadDf(char* fpath)
     char word[MAX_WORD_SZ];
     int word_len;
     int frequency;
+    pss temp;
 
     bufp = buflen = 0;
 
     while(BufpInc(fp))
     {
         word_len = 0;
-        while(isalnum(buf[bufp]))
+        while(buf[bufp] != ' ')
         {
             word[word_len++] = buf[bufp];
             BufpInc(fp);
         }
-        word[word_len]='\0';		
+        word[word_len] = '\0';
+        temp.F = string(word);
+
         BufpInc(fp);
 
-        frequency=0;
-        while(isdigit(buf[bufp]))
-        {
-            frequency = frequency*10 + buf[bufp] - '0';
-            BufpInc(fp);
-        }
-        df[string(word)] = frequency;
-    }
-    fclose(fp);
-}
-
-void Similarity::LoadFile(char* fpath, vector<pair<string, double> >& wt)
-{
-    FILE* fp = fopen(fpath,"r");
-    char word[MAX_WORD_SZ];
-    int word_len;
-    int frequency;
-    double weight;	
-
-    bufp = buflen = 0;	
-    while(BufpInc(fp))
-    {
         word_len = 0;
         while(isalnum(buf[bufp]))
         {
             word[word_len++] = buf[bufp];
             BufpInc(fp);
         }
-        word[word_len]='\0';		
+        word[word_len] = '\0';
+        temp.S = string(word);
+
         BufpInc(fp);
 
         frequency = 0;
         while(isdigit(buf[bufp]))
         {
-            frequency=frequency*10+buf[bufp]-'0';
-            BufpInc(fp);	
+            frequency = frequency*10 + buf[bufp] - '0';
+            BufpInc(fp);
         }
-
-        weight = log2((0.5 + num_files)/df[string(word)]);
-        weight /= log2(1.0 + num_files);
-        weight *= frequency;
-
-        wt.push_back(make_pair(string(word),weight));
+        df[temp] = frequency;
     }
     fclose(fp);
 }
 
-double Similarity::FindDocSim(vector<pair<string, double> >& wt1,
-                              vector<pair<string, double> >& wt2)
+void Similarity::LoadFile(char* fpath, vector<pair<pss, double> >& wt)
+{
+    FILE* fp = fopen(fpath,"r");
+    char word[MAX_WORD_SZ];
+    int word_len;
+    int frequency;
+    double weight;
+    pss temp;
+
+    bufp = buflen = 0;	
+    while(BufpInc(fp))
+    {
+        word_len = 0;
+        while(buf[bufp] != ' ')
+        {
+            word[word_len++] = buf[bufp];
+            BufpInc(fp);
+        }
+        word[word_len] = '\0';
+        temp.F = string(word);
+
+        BufpInc(fp);
+
+        word_len = 0;
+        while(isalnum(buf[bufp]))
+        {
+            word[word_len++] = buf[bufp];
+            BufpInc(fp);
+        }
+        word[word_len] = '\0';
+        temp.S = string(word);
+
+        BufpInc(fp);
+
+        frequency = 0;
+        while(isdigit(buf[bufp]))
+        {
+            frequency = frequency*10 + buf[bufp] - '0';
+            BufpInc(fp);	
+        }
+
+        weight = log2((0.5 + num_files)/df[temp]);
+        weight /= log2(1.0 + num_files);
+        weight *= frequency;
+
+        wt.push_back(make_pair(temp, weight));
+    }
+    fclose(fp);
+}
+
+double Similarity::FindDocSim(vector<pair<pss, double> >& wt1,
+                              vector<pair<pss, double> >& wt2)
 {
     int i = 0;
     int j = 0;
@@ -152,21 +184,21 @@ double Similarity::FindDocSim(vector<pair<string, double> >& wt1,
 
     while(i < wt1.size() && j < wt2.size())
     {
-        if(wt1[i].first < wt2[j].first)
+        if(wt1[i].F < wt2[j].F)
         {
-            norm1 += wt1[i].second * wt1[i].second;
+            norm1 += wt1[i].S * wt1[i].S;
             i++;
         }
-        else if(wt1[i].first > wt2[j].first)
+        else if(wt1[i].F > wt2[j].F)
         {
-            norm2 += wt2[j].second * wt2[j].second;
+            norm2 += wt2[j].S * wt2[j].S;
             j++;
         }
         else
         {
-            nume  += wt1[i].second * wt2[j].second;
-            norm1 += wt1[i].second * wt1[i].second;
-            norm2 += wt2[j].second * wt2[j].second;
+            nume  += wt1[i].S * wt2[j].S;
+            norm1 += wt1[i].S * wt1[i].S;
+            norm2 += wt2[j].S * wt2[j].S;
             i++;
             j++;
         }
@@ -201,7 +233,7 @@ void Similarity::FindSim()
             continue;
 
         strcpy(fpath + unigram_dpath_len + 1, file->d_name);
-        vector<pair<string, double> > wt;
+        vector<pair<pss, double> > wt;
         LoadFile(fpath, wt);
         int f1 = atoi(file->d_name);
 
@@ -220,7 +252,7 @@ void Similarity::FindSim()
 
             strcpy(fpath2 + unigram_dpath_len2 + 1, file2->d_name);
             int f2 = atoi(file2->d_name);
-            vector<pair<string, double> > wt2;
+            vector<pair<pss, double> > wt2;
             LoadFile(fpath2, wt2);
             sim[f2][f1] = sim[f1][f2] = FindDocSim(wt, wt2);	
         }
@@ -249,7 +281,7 @@ int main(int argc,char* argv[])
 {
     if(argc != 3)
     {
-        puts("Usage: ./a.out <unigram_dir> <df path>");
+        puts("Usage: ./a.out <unigram_dir> <df path> > sim_fpath");
         return -1;
     }
 
