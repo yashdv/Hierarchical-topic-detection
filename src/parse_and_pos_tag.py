@@ -95,7 +95,7 @@ def ParseFile(fname, out_fname):
 def IterateCorpusDir(dir_path, output_dir):
     files = os.listdir(dir_path)
     files.sort(key = lambda x: int(x))
-    files = files[:1000]
+#    files = files[:1000]
 
     for file_ in files:
         fpath = os.path.join(dir_path, file_)
