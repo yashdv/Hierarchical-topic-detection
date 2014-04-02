@@ -107,7 +107,8 @@ def main():
 
     if len(sys.argv) != 5:
         print ('Usage: ./a.out <StopWordsFile> <CorpusDir> <OutputDir>'
-               ' <df-dirpath>')
+               ' <df-fpath>')
+        print 'Note: df-fpath means filename/filepath and not just dir.'
         return
 
     LoadStopWords(sys.argv[1])
