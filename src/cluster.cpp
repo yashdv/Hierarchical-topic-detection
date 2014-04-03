@@ -57,12 +57,10 @@ HC::HC(char* simf)
     tree = vector<Node>(n+1);
     for(int i=1; i<=n; ++i)
     {
-        Node node;
-        node.id = i;
-        node.left = NULL;
-        node.right = NULL;
-        node.is_root = true;
-        tree[i] = node;
+        tree[i].id = i;
+        tree[i].left = NULL;
+        tree[i].right = NULL;
+        tree[i].is_root = true;
     }
 
     ID_CNT = n;
@@ -140,7 +138,7 @@ void HC::Run()
 
 void HC::PrintTree()
 {
-    for(int i=0; i<tree.size(); ++i)
+    for(int i=1; i<tree.size(); ++i)
     {
         if(!tree[i].is_root)
             continue;
@@ -164,28 +162,28 @@ void HC::Print(Node* p, int level)
     while(!rec.empty())
     {
 
-        printf("\nsz = %d\n", (int)rec.size());
+        printf("\nsz = %d, addr = %u\n", (int)rec.size(), &(rec.top()));
         Node* n = rec.top().first;
-        printf("addr = %u\n", &n);
-        puts("Node* n");
         int level = rec.top().second;
-        puts("level");
         rec.pop();
-        puts("pop");
 
         for(int i=1; i<level; ++i)
             printf("|    ");
-
         if(level)
             printf("|----");
 
-        printf("%d %u %u\n", n->id, &(*n->left), &(*n->right));
+        printf("%d %u %u\n", n->id, (n->left == NULL), (n->right == NULL));
 
-        puts("push time");
         if(n->left != NULL)
+        {
+            puts("push left");
             rec.push(make_pair(n->left, level + 1));
+        }
         if(n->right != NULL)
+        {
+            puts("push right");
             rec.push(make_pair(n->right, level + 1));
+        }
     }
 }
 
