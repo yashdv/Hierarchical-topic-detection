@@ -104,7 +104,6 @@ def IterateCorpusDir(dir_path, output_dir):
     files = os.listdir(dir_path)
     files.sort(key = lambda x: int(x))
 #    files = files[:1000]
-    files = ['11047']
 
     x = os.listdir(output_dir)
     files_in_output_dir = {}

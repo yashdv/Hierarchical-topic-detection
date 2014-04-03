@@ -2,6 +2,8 @@
 #include<iostream>
 #include<vector>
 #include<algorithm>
+#include<utility>
+#include<stack>
 
 using namespace std;
 
@@ -92,7 +94,7 @@ double HC::ClusterSim(Cluster& c1, Cluster& c2)
 
 void HC::Run()
 {
-    while(clusters.size() > 650)
+    while(clusters.size() > 400)
     {
         double max_clus_sim = -1;
         int idx1;
@@ -143,6 +145,9 @@ void HC::PrintTree()
         if(!tree[i].is_root)
             continue;
 
+        if(tree[i].id != 1556)
+            continue;
+
         Node* root = &tree[i];
         Print(root, 0);
         printf("\n\n");
@@ -153,17 +158,35 @@ void HC::PrintTree()
 
 void HC::Print(Node* p, int level)
 {
-    if(p == NULL)
-        return;
-    for(int i=1; i<level; ++i)
+    stack<pair<Node*, int> > rec;
+    rec.push(make_pair(p, 0));
+
+    while(!rec.empty())
     {
-        printf("|    ");
+
+        printf("\nsz = %d\n", (int)rec.size());
+        Node* n = rec.top().first;
+        printf("addr = %u\n", &n);
+        puts("Node* n");
+        int level = rec.top().second;
+        puts("level");
+        rec.pop();
+        puts("pop");
+
+        for(int i=1; i<level; ++i)
+            printf("|    ");
+
+        if(level)
+            printf("|----");
+
+        printf("%d %u %u\n", n->id, &(*n->left), &(*n->right));
+
+        puts("push time");
+        if(n->left != NULL)
+            rec.push(make_pair(n->left, level + 1));
+        if(n->right != NULL)
+            rec.push(make_pair(n->right, level + 1));
     }
-    if(level)
-        printf("|----");
-    printf("%d\n", p->id);
-    Print(p->left,  level + 1);
-    Print(p->right, level + 1);
 }
 
 int main(int argc, char* argv[])
