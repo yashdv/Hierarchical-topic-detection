@@ -10,8 +10,16 @@ MAX_WORD_SZ = 100
 stop_words_dict = {}
 doc_freq = {}
 allowed_tags = ['V', 'N']
+printable = {}
 
 stemmer = nltk.stem.PorterStemmer()
+
+def LoadPrintable():
+    global printable
+
+    for c in string.printable:
+        if c is not '?':
+            printable[c] = 1
 
 def LoadStopWords(fname):
     global stop_words_dict
@@ -77,7 +85,7 @@ def ParseFile(fname, out_fname):
     raw = nltk.clean_html(html)
     if len(raw) < 10:
         raw = html
-    raw = ''.join([c if c in string.printable else ' ' for c in raw])
+    raw = ''.join([c if c in printable else ' ' for c in raw])
 
     sentences = nltk.sent_tokenize(raw)
 
@@ -96,8 +104,16 @@ def IterateCorpusDir(dir_path, output_dir):
     files = os.listdir(dir_path)
     files.sort(key = lambda x: int(x))
 #    files = files[:1000]
+    files = ['11047']
+
+    x = os.listdir(output_dir)
+    files_in_output_dir = {}
+    for i in x:
+        files_in_output_dir[i] = 1;
 
     for file_ in files:
+        if file_ in files_in_output_dir:
+            continue
         fpath = os.path.join(dir_path, file_)
         out_fpath = os.path.join(output_dir, file_)
         ParseFile(fpath, out_fpath)
@@ -111,6 +127,7 @@ def main():
         print 'Note: df-fpath means filename/filepath and not just dir.'
         return
 
+    LoadPrintable()
     LoadStopWords(sys.argv[1])
     IterateCorpusDir(sys.argv[2], sys.argv[3])
     
