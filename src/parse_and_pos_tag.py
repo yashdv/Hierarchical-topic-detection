@@ -97,22 +97,14 @@ def ParseFile(fname, out_fname):
             if pos_tag[1][0] in allowed_tags:
                 RecordTag(word_freq, pos_tag[0], pos_tag[1][0])
 
-#    UpdateDocFreq(word_freq)
+    UpdateDocFreq(word_freq)
     WriteFreq(word_freq, out_fname)
 
 def IterateCorpusDir(dir_path, output_dir):
     files = os.listdir(dir_path)
     files.sort(key = lambda x: int(x))
-#    files = files[:1000]
-
-    x = os.listdir(output_dir)
-    files_in_output_dir = {}
-    for i in x:
-        files_in_output_dir[i] = 1;
 
     for file_ in files:
-        if file_ in files_in_output_dir:
-            continue
         fpath = os.path.join(dir_path, file_)
         out_fpath = os.path.join(output_dir, file_)
         ParseFile(fpath, out_fpath)
@@ -131,7 +123,7 @@ def main():
     IterateCorpusDir(sys.argv[2], sys.argv[3])
     
     doc_freq_out_path = os.path.join(sys.argv[4], "docfreq_pos_1K")
-#    WriteFreq(doc_freq, doc_freq_out_path)
+    WriteFreq(doc_freq, doc_freq_out_path)
 
 if __name__ == '__main__':
     main()
