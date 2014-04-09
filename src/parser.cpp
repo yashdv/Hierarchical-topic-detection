@@ -198,6 +198,8 @@ void Parser::ParseFile(char* fpath, char* fname)
     char word[MAX_WORD_SZ];
 
     freq.clear();
+    bufp = 0;
+    buflen = 0;
 
     while(BufpInc(fp))
     {

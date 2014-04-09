@@ -22,11 +22,11 @@ char* tf_dir;
 char* df_fpath;
 map< pair<string, string>, int> doc_freq;
 
+void initx(char* tf_dpath, char* dffpath);
 bool Read(FILE* fp);
 bool BufpInc(FILE* fp);
 void WriteFreq(char* outfpath, map< pair<string, string>, int>& mp);
-
-void ParseFile(char* fpath, char* fname);
+void ParseFile(char* fpath);
 void IterateDir();
 
 void initx(char* tf_dpath, char* dffpath)
@@ -65,7 +65,7 @@ void WriteFreq(char* outfpath, map< pair<string, string>, int>& mp)
     fclose(fp);
 }
 
-void ParseFile(char* fpath, char* fname)
+void ParseFile(char* fpath)
 {
     FILE* fp = fopen(fpath, "r");
     int word_len;
@@ -73,6 +73,8 @@ void ParseFile(char* fpath, char* fname)
     pair<string, string> temp;
 
     puts(fpath);
+    bufp = 0;
+    buflen = 0;
 
     while(BufpInc(fp))
     {
@@ -129,7 +131,7 @@ void IterateDir()
             continue;
 
         strcpy(fpath + tf_dir_len + 1, file->d_name);
-        ParseFile(fpath, file->d_name);
+        ParseFile(fpath);
     }
     closedir(dir);
 

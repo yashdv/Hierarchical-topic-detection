@@ -132,6 +132,7 @@ void Similarity::LoadFile(char* fpath, vector<pair<pss, double> >& wt)
     pss temp;
 
     bufp = buflen = 0;	
+
     while(BufpInc(fp))
     {
         word_len = 0;

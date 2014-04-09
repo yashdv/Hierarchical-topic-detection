@@ -5,6 +5,8 @@
 #include<utility>
 #include<stack>
 
+#include "topics.hpp"
+
 using namespace std;
 
 class Cluster
@@ -27,23 +29,27 @@ class Node
 class HC
 {
     public:
+        ClusterTopics &clt;
         vector<vector<double> > sim;
         vector<Cluster> clusters;
         vector<Node*> tree;
         int ID_CNT;
         int n;
+        FILE* topics_map_file;
 
-        HC(char* simf);
+        HC(char* simf, char* topics_map_fpath, ClusterTopics& _clt);
         void LoadSim(char* simf);
         double ClusterSim(Cluster& c1, Cluster& c2);
+        void WriteTopics(int cluster_id, vector<string>& v);
         void Run();
         void PrintTree();
         void Print(Node* p);
         ~HC();
 };
 
-HC::HC(char* simf)
+HC::HC(char* simf, char* topics_map_fpath, ClusterTopics& _clt) : clt(_clt)
 {
+    topics_map_file = fopen(topics_map_fpath, "w");
     LoadSim(simf);
 
     clusters = vector<Cluster>(n);
@@ -66,22 +72,16 @@ HC::HC(char* simf)
     ID_CNT = n;
 }
 
-HC::~HC()
-{
-    for(int i=0; i<tree.size(); ++i)
-        delete tree[i];
-}
-
 void HC::LoadSim(char* simf)
 {
     FILE* fp = fopen(simf, "r");
 
-    fscanf(fp, "%d", &n);
+    int _ = fscanf(fp, "%d", &n);
     sim = vector<vector<double> >(n+1, vector<double>(n+1));
 
     for(int i=1; i<=n; ++i)
         for(int j=1; j<=n; ++j)
-            fscanf(fp, "%lf", &sim[i][j]);
+            _ = fscanf(fp, "%lf", &sim[i][j]);
     fclose(fp);
 }
 
@@ -96,9 +96,19 @@ double HC::ClusterSim(Cluster& c1, Cluster& c2)
     return avg_sim;
 }
 
+void HC::WriteTopics(int cluster_id, vector<string>& v)
+{
+    fprintf(topics_map_file, "%d", cluster_id);
+    for(int i=0; i<v.size(); i++)
+        fprintf(topics_map_file, " %s,", v[i].c_str());
+    fprintf(topics_map_file, "\n\n");
+}
+
 void HC::Run()
 {
-    while(clusters.size() > 400)
+    vector<string> topics;
+
+    while(clusters.size() > 500)
     {
         double max_clus_sim = -1;
         int idx1;
@@ -135,6 +145,11 @@ void HC::Run()
         clusters[idx1].did.insert(clusters[idx1].did.end(),
                                   clusters[idx2].did.begin(),
                                   clusters[idx2].did.end());
+
+        topics.clear();
+        clt.GetTopics(clusters[idx1].did, topics);
+        WriteTopics(clusters[idx1].id, topics);
+
         clusters.erase(clusters.begin() + idx2);
     }
 }
@@ -178,15 +193,25 @@ void HC::Print(Node* p)
     }
 }
 
+HC::~HC()
+{
+    fclose(topics_map_file);
+    for(int i=0; i<tree.size(); ++i)
+        delete tree[i];
+}
+
 int main(int argc, char* argv[])
 {
-    if(argc != 2)
+    if(argc != 4)
     {
-        puts("Usage: ./a.out sim_mat_fpath");
+        puts("Usage: ./a.out <sim_mat_fpath> <topics_map_fpath> <topic_tf_dir>"
+             " > output_tree_fpath");
         return -1;
     }
 
-    HC handler(argv[1]);
+    ClusterTopics clt(argv[3]);
+
+    HC handler(argv[1], argv[2], clt);
     handler.Run();
     handler.PrintTree();
     return 0;
