@@ -33,7 +33,6 @@ class ClusterTopics
         map<string, double> verbs;
         vector<pair<double, string> >sorted_nnps;
         vector<pair<double, string> >sorted_verbs;
-        vector<string> topics;
 
         ClusterTopics(char* tf_dpath, int _topkval);
         bool BufpInc(FILE* fp);
@@ -45,8 +44,8 @@ class ClusterTopics
         void CalculateScore();
         void ParseDocs(vector<int>& doc_ids);
         void SortByScore();
-        void TopBigrams(vector<string>& topics);
-        void GetTopics(vector<int> &doc_ids, vector<string> &topics);
+        void TopBigrams(string& topics);
+        void GetTopics(vector<int> &doc_ids, string &topics);
         ~ClusterTopics();
 };
 
@@ -263,37 +262,26 @@ void ClusterTopics::SortByScore()
     sort(sorted_verbs.rbegin(), sorted_verbs.rend());
 }
 
-void ClusterTopics::TopBigrams(vector<string>& topics)
+void ClusterTopics::TopBigrams(string& topics)
 {
     int l1 = min(topk_val, (int)sorted_nnps.size());
     int l2 = min(topk_val, (int)sorted_verbs.size());
 
-    topics.clear();
+    topics = "";
 
     for(int i=0; i<l1; ++i)
     {
-        topics.push_back(sorted_nnps[i].second);
+        topics += sorted_nnps[i].second + " ";
     }
 
     for(int i=0; i<l2; ++i)
     {
-        topics.push_back(sorted_verbs[i].second);
+        topics += sorted_verbs[i].second + " ";
     }
 
-    /*
-    for(int i=0; i<l1; ++i)
-    {
-        for(int j=0; j<l2; ++j)
-        {
-            topics.push_back(sorted_nnps[i].second +
-                             " " +
-                             sorted_verbs[j].second);
-        }
-    }
-    */
 }
 
-void ClusterTopics::GetTopics(vector<int>& doc_ids, vector<string>& topics)
+void ClusterTopics::GetTopics(vector<int>& doc_ids, string& topics)
 {
     bufp = 0;
     buflen = 0;

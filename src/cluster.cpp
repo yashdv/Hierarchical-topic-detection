@@ -6,8 +6,12 @@
 #include<stack>
 
 #include "topics.hpp"
+#include "rapidjson/document.h"
+#include "rapidjson/prettywriter.h"
+#include "rapidjson/stringbuffer.h"
 
 using namespace std;
+using namespace rapidjson;
 
 class Cluster
 {
@@ -20,9 +24,11 @@ class Cluster
 class Node
 {
     public:
+
         int id;
         bool is_root;
-        vector<string> tags;
+        string tags;
+
         Node* left;
         Node* right;
 };
@@ -30,37 +36,31 @@ class Node
 class Jsonx
 {
     public:
-        FILE* json_file;
+
+        char* json_file_name;
+        Document newdoc;
+        Document::AllocatorType& allocator;
 
         Jsonx(char* json_file_name);
-        Header();
-        WriteJsonNode(char* name_attr, bool children);
-        ~Jsonx();
+        void WriteJsonStrToFile();
 };
 
-Jsonx::Jsonx(char* json_file_name)
+Jsonx::Jsonx(char* _json_file_name) :
+    allocator(newdoc.GetAllocator())
 {
-    json_file = fopen(json_file_name, "w");
+    json_file_name = _json_file_name;
+    newdoc.SetObject();
 }
 
-Jsonx::Header()
+void Jsonx::WriteJsonStrToFile()
 {
-    fprintf(json_file, "{\n\"name\": \"\",\n\"children\": [");
-}
+    StringBuffer buf;
+    Writer<rapidjson::StringBuffer> writer(buf);
+    newdoc.Accept(writer);
 
-Jsonx::WriteJsonNode(char* name_attr, bool children)
-{
-    fprintf(json_file, "{\n\"name\": \"%s\"", name_attr);
-    if(children)
-        fprintf(json_file, ",\n\"children\": [");
-    else
-        fprintf(json_file, "\n}");
-
-}
-
-Jsonx::~Jsonx()
-{
-    fclose(json_file);
+    FILE* fp = fopen(json_file_name, "w");
+    fputs(buf.GetString(), fp);
+    fclose(fp);
 }
 
 class HC
@@ -78,12 +78,14 @@ class HC
         HC(char* simf,
            char* topics_map_fpath,
            ClusterTopics& _clt,
-           Jsonx& _jsonhand);
+           Jsonx& _jsonhandler);
+
         void LoadSim(char* simf);
         double ClusterSim(Cluster& c1, Cluster& c2);
-        void WriteTopics(int cluster_id, vector<string>& v);
+        void WriteTopics(int cluster_id, string& v);
         void Run();
         void PrintTree();
+        void PrintRec(Node* p, int level, Value& obj_c);
         void Print(Node* p);
         ~HC();
 };
@@ -91,9 +93,9 @@ class HC
 HC::HC(char* simf,
        char* topics_map_fpath,
        ClusterTopics& _clt,
-       Jsonx& _jsonhand) :
+       Jsonx& _jsonhandler) :
     clt(_clt),
-    jsonhandler(_jsonhand)
+    jsonhandler(_jsonhandler)
 {
     topics_map_file = fopen(topics_map_fpath, "w");
     LoadSim(simf);
@@ -142,18 +144,13 @@ double HC::ClusterSim(Cluster& c1, Cluster& c2)
     return avg_sim;
 }
 
-void HC::WriteTopics(int cluster_id, vector<string>& v)
+void HC::WriteTopics(int cluster_id, string& v)
 {
-    fprintf(topics_map_file, "%d", cluster_id);
-    for(int i=0; i<v.size(); i++)
-        fprintf(topics_map_file, " %s", v[i].c_str());
-    fprintf(topics_map_file, "\n");
+    fprintf(topics_map_file, "%d %s\n", cluster_id, v.c_str());
 }
 
 void HC::Run()
 {
-    vector<string> topics;
-
     while(clusters.size() > 500)
     {
         double max_clus_sim = -1;
@@ -192,12 +189,10 @@ void HC::Run()
                                   clusters[idx2].did.begin(),
                                   clusters[idx2].did.end());
 
-        //topics.clear();
         //clt.GetTopics(clusters[idx1].did, topics);
         //WriteTopics(clusters[idx1].id, topics);
-        node->tags.clear();
         clt.GetTopics(clusters[idx1].did, node->tags);
-        //WriteTopics(clusters[idx1].id, node->tags);
+        WriteTopics(clusters[idx1].id, node->tags);
 
         clusters.erase(clusters.begin() + idx2);
     }
@@ -205,17 +200,55 @@ void HC::Run()
 
 void HC::PrintTree()
 {
-    jsonhandler.Header();
+    jsonhandler.newdoc.AddMember("name", "All News", jsonhandler.allocator);
+    Value array(kArrayType);
+
     for(int i=1; i<tree.size(); ++i)
     {
         if(!tree[i]->is_root)
             continue;
 
-        Print(tree[i]);
-        printf("\n\n");
-        printf("************");
-        printf("\n\n");
+        Value obj(kObjectType);
+        PrintRec(tree[i], 0, obj);
+        printf("\n\n************\n\n");
+
+        if(tree[i]->id <= 1000)
+            continue;
+
+        array.PushBack(obj, jsonhandler.allocator);
     }
+
+    jsonhandler.newdoc.AddMember("children", array, jsonhandler.allocator);
+    jsonhandler.WriteJsonStrToFile();
+}
+
+
+void HC::PrintRec(Node* p, int level, Value& obj_c)
+{
+    if(p == NULL)
+        return;
+
+    for(int i=1; i<level; ++i)
+        printf("|    ");
+    if(level)
+        printf("|----");
+    printf("%d\n", p->id);
+
+    Value obj_r(kObjectType);
+    Value obj_l(kObjectType);
+
+    PrintRec(p->right, level + 1, obj_r);
+    PrintRec(p->left, level + 1, obj_l);
+
+    Value array_c(kArrayType);
+    array_c.PushBack(obj_r, jsonhandler.allocator);
+    array_c.PushBack(obj_l, jsonhandler.allocator);
+
+    if((int)p->tags.size() > 0)
+        obj_c.AddMember("name", p->tags.c_str(), jsonhandler.allocator);
+    else
+        obj_c.AddMember("name", p->id, jsonhandler.allocator);
+    obj_c.AddMember("children", array_c, jsonhandler.allocator);
 }
 
 void HC::Print(Node* p)
@@ -255,7 +288,7 @@ int main(int argc, char* argv[])
     if(argc != 5)
     {
         puts("Usage: ./a.out <sim_mat_fpath> <topics_map_fpath> <json_fpath>"
-             "<topic_tf_dir> > output_tree_fpath");
+             " <topic_tf_dir> > output_tree_fpath");
         return -1;
     }
 
