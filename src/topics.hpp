@@ -272,6 +272,17 @@ void ClusterTopics::TopBigrams(vector<string>& topics)
 
     for(int i=0; i<l1; ++i)
     {
+        topics.push_back(sorted_nnps[i].second);
+    }
+
+    for(int i=0; i<l2; ++i)
+    {
+        topics.push_back(sorted_verbs[i].second);
+    }
+
+    /*
+    for(int i=0; i<l1; ++i)
+    {
         for(int j=0; j<l2; ++j)
         {
             topics.push_back(sorted_nnps[i].second +
@@ -279,6 +290,7 @@ void ClusterTopics::TopBigrams(vector<string>& topics)
                              sorted_verbs[j].second);
         }
     }
+    */
 }
 
 void ClusterTopics::GetTopics(vector<int>& doc_ids, vector<string>& topics)
