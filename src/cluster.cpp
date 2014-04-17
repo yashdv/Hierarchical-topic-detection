@@ -151,7 +151,7 @@ void HC::WriteTopics(int cluster_id, string& v)
 
 void HC::Run()
 {
-    while(clusters.size() > 500)
+    while(clusters.size() > 400)
     {
         double max_clus_sim = -1;
         int idx1;
