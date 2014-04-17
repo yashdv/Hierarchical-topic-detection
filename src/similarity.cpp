@@ -54,7 +54,7 @@ Similarity::Similarity(char* unigram_dp,char* df_path)
     sprintf(cmd, "ls %s | wc -l", unigram_dpath);
 
     FILE* pipe = popen(cmd, "r");
-    fscanf(pipe,"%d",&num_files);
+    int _ = fscanf(pipe,"%d",&num_files);
     pclose(pipe);
 
     sim = vector<vector<double> >(num_files+1, vector<double>(num_files+1));

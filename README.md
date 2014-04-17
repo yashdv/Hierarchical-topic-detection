@@ -1,7 +1,8 @@
 Hierarchical-topic-detection
 ============================
 
-Group documents in a hierarchy of clusters.
+Group documents in a hierarchy of clusters and extract topics from those
+clusters.
 
 Compile and Run  
 _______________________________  
